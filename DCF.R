@@ -13,6 +13,7 @@ data_amd <- data.frame(data_amd)
 data_amd$quarter <- quarters(data_amd$reportperiod)
 
 
+
 # create subsets
 
 # recent 2018 subset
@@ -28,14 +29,21 @@ subset_2015 <- subset(data_amd, data_amd$reportperiod == "2015-06-27")
 subset_2014 <- subset(data_amd, data_amd$reportperiod == "2014-06-28")
 # 2013 subset
 subset_2013 <- subset(data_amd, data_amd$reportperiod == "2013-06-29")
+# 2012 subset
+subset_2012 <- subset(data_amd, data_amd$reportperiod == "2012-06-30")
+# 2011 subset
+subset_2011 <- subset(data_amd, data_amd$reportperiod == "2011-07-02")
+# 2010 subset
+subset_2010 <- subset(data_amd, data_amd$reportperiod == "2010-06-26")
+# 2009 subset
+subset_2009 <- subset(data_amd, data_amd$reportperiod == "2009-06-27")
+# 2008 subset
+subset_2008 <- subset(data_amd, data_amd$reportperiod == "2008-06-28")
 
 
 
 
-
-
-# get EBITDA 
-
+# get ebit data
 ebit_data <- data_amd$ebit
 data_ebit_period <- data_amd[,c("reportperiod","ebit", "quarter")]
 data_ebit_period
@@ -63,11 +71,17 @@ cash_2017 <- subset_2017$cashneq
 
 
 
+
+
+
 # % change
 perc_change_funct <- function(new, old){
   increase <- new - old
   perc_change <- increase / old * 100
 }
+
+
+
 # ebit % change
 ebit_1y_change <- perc_change_funct(recent_subset$ebit, subset_2017$ebit)
 ebit_1y_change
@@ -104,6 +118,21 @@ cash_5y_change
 
 
 
+# Percentage sales method 
+
+
+
+
+
+# create two vectors: one for historical (hist) revenues
+# and one for projected (proj) revenues
+hist <- c(recent_subset$revenue, subset_2017$revenue, subset_2016$revenue, subset_2015$revenue, subset_2014$revenue, subset_2013$revenue, subset_2012$revenue, subset_2011$revenue, subset_2010$revenue, subset_2009$revenue, rep(0,5))
+
+
+
+
+
+
 #forcast should be build up to unlevered free cash flow (FCFF)
 # **********
 # calculate changes in non-cash working capital 
@@ -128,9 +157,11 @@ net_income_func <- function(revenue, COGS, op_exp, interest_exp, taxes){
 #net_income_func(recent_subset$revenue, recent_subset$c
 
 
-
 # present Net Income
 present_NI <- recent_subset$netinc
+
+
+
 
 
 
@@ -140,6 +171,8 @@ fcfe_func <- function(net_income, depn_amor, capex, inc_wc){
   print(fcfe)
 }
 present_fcfe <- fcfe_func(present_NI, recent_depr_amor, recent_capex_data, ncwc_1y_change)
+
+
 
 
 # PV of FCFE 
@@ -188,18 +221,6 @@ pv_of_terminal <- pv_of_tv(tv_yr5, k_e)
 
 
 
-#calculate FCFF; ebit = ebit, t = taxes, dep_and_amort = depreciation and amortization, change_NCWC = increases in noncash working capital
-fcff_funct <- function(ebitda, t, capex, dep_and_amort, increase_ncwc){
-    fcff <- (ebitda - t - capex + dep_and_amort - increase_ncwc)
-}
-
-#fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, change_ncwc)
-
-recent_fcff <- fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, ncwc_1y_change)
-recent_fcff
-
-
-
 
 
 # Combine PV of FCFE abd PV of Terminal Value
@@ -210,4 +231,22 @@ equity_value
 shout <- 969
 equity_per_share <- equity_value / shout
 equity_per_share
+
+
+
+
+
+
+
+
+#calculate FCFF; ebit = ebit, t = taxes, dep_and_amort = depreciation and amortization, change_NCWC = increases in noncash working capital
+fcff_funct <- function(ebitda, t, capex, dep_and_amort, increase_ncwc){
+  fcff <- (ebitda - t - capex + dep_and_amort - increase_ncwc)
+}
+
+#fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, change_ncwc)
+
+recent_fcff <- fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, ncwc_1y_change)
+recent_fcff
+
 
