@@ -62,25 +62,152 @@ cash_2017 <- subset_2017$cashneq
 
 
 
+
+# % change
+perc_change_funct <- function(new, old){
+  increase <- new - old
+  perc_change <- increase / old * 100
+}
+# ebit % change
+ebit_1y_change <- perc_change_funct(recent_subset$ebit, subset_2017$ebit)
+ebit_1y_change
+ebit_5y_change <- perc_change_funct(recent_subset$ebit, subset_2013$ebit)
+ebit_5y_change
+# taxes % change
+taxes_1y_change <- perc_change_funct(recent_subset$taxexp, subset_2017$taxexp)
+taxes_1y_change
+taxes_5y_change <- perc_change_funct(recent_subset$taxexp, subset_2013$taxexp)
+taxes_5y_change
+# CAPEX % change
+capex_1y_change <- perc_change_funct(recent_subset$capex, subset_2017$capex)
+capex_1y_change
+capex_5y_change <- perc_change_funct(recent_subset$capex, subset_2013$capex)
+capex_5y_change
+# Depreciation & Amortization % change
+depr_amor_1y_change <- perc_change_funct(recent_subset$depamor, subset_2017$depamor)
+depr_amor_1y_change
+depr_amor_5y_change <- perc_change_funct(recent_subset$depamor, subset_2013$depamor)
+depr_amor_5y_change
+# Working capital % change
+working_capital_1y_change <- perc_change_funct(recent_subset$workingcapital, subset_2017$workingcapital)
+working_capital_1y_change
+working_capital_5y_change <- perc_change_funct(recent_subset$workingcapital, subset_2013$workingcapital)
+working_capital_5y_change
+# Cash % change
+cash_1y_change <- perc_change_funct(recent_subset$cashneq, subset_2017$cashneq)
+cash_1y_change
+cash_5y_change <- perc_change_funct(recent_subset$cashneq, subset_2013$cashneq)
+cash_5y_change
+
+
+
+
+
+
 #forcast should be build up to unlevered free cash flow (FCFF)
 # **********
 # calculate changes in non-cash working capital 
-ncwc_recent <- recent_working_capital - recent_cash_data
-ncwc_old <- working_capital_2017 - cash_2017
-# find two year change/increase
-change_ncwc <- ncwc_recent - ncwc_old
+ncwc_recent <- recent_working_capital
+ncwc_old <- working_capital_2017
+# find change/increase in working capital
+wc_1y_change <- ncwc_recent - ncwc_old
 # change formula on ncwc from present date amd ncwc from two years ago
 
 
 
 
 
+
+# Net Income function
+net_income_func <- function(revenue, COGS, op_exp, interest_exp, taxes){
+  gross_profit <- revenue - COGS
+  ebit <- gross_profit - op_exp
+  pre_tax_income <-ebit - interest_exp
+  net_income <- pre_tax_income - taxes
+}
+#net_income_func(recent_subset$revenue, recent_subset$c
+
+
+
+# present Net Income
+present_NI <- recent_subset$netinc
+
+
+
+# fcfe function
+fcfe_func <- function(net_income, depn_amor, capex, inc_wc){
+  fcfe <- net_income + depn_amor - capex - inc_wc
+  print(fcfe)
+}
+present_fcfe <- fcfe_func(present_NI, recent_depr_amor, recent_capex_data, ncwc_1y_change)
+
+
+# PV of FCFE 
+k_e <- 0.15
+cf <- rep(100, 5)
+cf <- data.frame(cf)
+
+cf$period <- seq(1, 5, 1)
+
+cf$pv_factor <- 1 / (1 + k_e)^cf$period
+
+cf$pv <- cf$cf * cf$pv_factor
+
+cf
+
+pv_fcfe <- sum(cf$pv)
+pv_fcfe
+  
+  
+  
+
+
+
+
+
+# terminal value function; PGR = perpetuity growth rate
+terminal_value_func <- function(FCFE_end_of_forecast, cost_of_equity, PGR = .03){
+  terminal_value <- (FCFE_end_of_forecast*(1 + PGR))/(cost_of_equity - PGR)
+}
+
+
+# PV of Terminal Value
+pv_of_tv <- function(term_value_yr5, k_e){
+  pv_tv <- term_value_yr5 / (1 + k_e)^5
+  print(pv_tv)
+}
+
+tv_yr5 <- 858.33
+k_e <- 0.15
+
+pv_of_terminal <- pv_of_tv(tv_yr5, k_e)
+
+  
+
+
+
+
+
 #calculate FCFF; ebit = ebit, t = taxes, dep_and_amort = depreciation and amortization, change_NCWC = increases in noncash working capital
-#fcff_funct <- formula(ebitda, t, capex, dep_and_amort, increase_ncwc){
-    #fcff <- (ebitda - t - capex + dep_and_amort - increase_ncwc)
-#}
+fcff_funct <- function(ebitda, t, capex, dep_and_amort, increase_ncwc){
+    fcff <- (ebitda - t - capex + dep_and_amort - increase_ncwc)
+}
 
 #fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, change_ncwc)
 
-recent_fcff <- (recent_ebitda - recent_taxes_data - recent_capex_data + recent_depr_amor - change_ncwc)
+recent_fcff <- fcff_funct(recent_ebitda, recent_taxes_data, recent_capex_data, recent_depr_amor, ncwc_1y_change)
 recent_fcff
+
+
+
+
+
+# Combine PV of FCFE abd PV of Terminal Value
+equity_value <- pv_fcfe + pv_of_terminal
+equity_value
+# convert to a per share number
+# assume x million shares outstanding
+shout <- 969
+equity_per_share <- equity_value / shout
+equity_per_share
+
